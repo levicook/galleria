@@ -15,6 +15,7 @@ const NFTFilters = ({ nftDataArray }: NFTFiltersProps) => {
   const searchParams = useSearchParams();
   const collectionFilter = searchParams.get("collection");
   const typeFilter = searchParams.get("type");
+  const blocklistFilter = searchParams.get("blocklist");
   const [collections, setCollections] = useState<Grouping[]>([]);
 
   useEffect(() => {
@@ -46,6 +47,10 @@ const NFTFilters = ({ nftDataArray }: NFTFiltersProps) => {
     const queryString = createQueryString("type", type);
     router.push(`${pathname}?${queryString}`);
   };
+  const handleBlocklistFilter = (blocklist: string) => {
+    const queryString = createQueryString("blocklist", blocklist);
+    router.push(`${pathname}?${queryString}`);
+  };
 
   const handleNoFilter = (type: string) => {
     if (type === "collection") {
@@ -62,6 +67,15 @@ const NFTFilters = ({ nftDataArray }: NFTFiltersProps) => {
       const newSearchParams = new URLSearchParams(searchParams);
       // Delete the 'type' parameter
       newSearchParams.delete("type");
+
+      // Navigate to the updated URL
+      const newURL = `${pathname}?${newSearchParams.toString()}`;
+      router.push(newURL);
+    } else if (type === "blocklist") {
+      // Create a new instance of URLSearchParams
+      const newSearchParams = new URLSearchParams(searchParams);
+      // Delete the 'blocklist' parameter
+      newSearchParams.delete("blocklist");
 
       // Navigate to the updated URL
       const newURL = `${pathname}?${newSearchParams.toString()}`;
@@ -178,6 +192,72 @@ const NFTFilters = ({ nftDataArray }: NFTFiltersProps) => {
                 }`}
               >
                 <a className="block px-4 py-2 text-sm">{"SPL20"}</a>
+              </li>
+            </ul>
+          </details>
+        </li>
+      </ul>
+
+      {/* Blocklist */}
+      <ul className="menu mt-2 w-full rounded-md bg-gray-500/20">
+        <li>
+          <details>
+            <summary className="text-base font-bold">Blocklist</summary>
+            <ul className="max-h-60 overflow-y-auto">
+              {/* Scrollable list */}
+
+              {/* Blocklist Option: None */}
+              <li
+                onClick={() => handleNoFilter("blocklist")}
+                className={`w-full font-medium hover:bg-neutral-700 hover:bg-opacity-60 ${
+                  !blocklistFilter ? "text-primary" : "text-white"
+                }`}
+              >
+                <a className="block px-4 py-2 text-sm">None</a>
+              </li>
+
+              {/* Blocklist Option: phantom-allowed */}
+              <li
+                key={"phantom-allowed"}
+                onClick={() => handleBlocklistFilter("phantom-allowed")}
+                className={`w-full font-medium hover:bg-neutral-700 hover:bg-opacity-60 ${
+                  blocklistFilter === "phantom-allowed" ? "text-primary" : "text-white"
+                }`}
+              >
+                <a className="block px-4 py-2 text-sm">{"Phantom Allowed"}</a>
+              </li>
+
+              {/* Blocklist Option: phantom-blocked */}
+              <li
+                key={"phantom-blocked"}
+                onClick={() => handleBlocklistFilter("phantom-blocked")}
+                className={`w-full font-medium hover:bg-neutral-700 hover:bg-opacity-60 ${
+                  blocklistFilter === "phantom-blocked" ? "text-primary" : "text-white"
+                }`}
+              >
+                <a className="block px-4 py-2 text-sm">{"Phantom Blocked"}</a>
+              </li>
+
+              {/* Blocklist Option: solflare-allowed */}
+              <li
+                key={"solflare-allowed"}
+                onClick={() => handleBlocklistFilter("solflare-allowed")}
+                className={`w-full font-medium hover:bg-neutral-700 hover:bg-opacity-60 ${
+                  blocklistFilter === "solflare-allowed" ? "text-primary" : "text-white"
+                }`}
+              >
+                <a className="block px-4 py-2 text-sm">{"Solflare Allowed"}</a>
+              </li>
+
+              {/* Blocklist Option: solflare-blocked */}
+              <li
+                key={"solflare-blocked"}
+                onClick={() => handleBlocklistFilter("solflare-blocked")}
+                className={`w-full font-medium hover:bg-neutral-700 hover:bg-opacity-60 ${
+                  blocklistFilter === "solflare-blocked" ? "text-primary" : "text-white"
+                }`}
+              >
+                <a className="block px-4 py-2 text-sm">{"Solflare Blocked"}</a>
               </li>
             </ul>
           </details>

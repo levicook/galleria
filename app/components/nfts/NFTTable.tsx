@@ -5,10 +5,26 @@ import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
 import { NonFungibleToken } from "@/app/types";
 import { NFTCard } from "@/app/components";
+import useBloomFilter from "../useBloomFilter";
+import { BloomFilter } from "bloom-filters";
 
 interface NFTTableProps {
   walletAddress: string;
   nftDataArray: NonFungibleToken[];
+}
+
+function hasNFT(bloomFilter: BloomFilter, nft: NonFungibleToken) {
+  return bloomFilter.has(nft.id) ||
+    nft.authorities
+      .map(a => a.address)
+      .some(a => bloomFilter.has(a)) ||
+    nft.creators
+      .map(c => c.address)
+      .some(a => bloomFilter.has(a)) ||
+    nft.grouping
+      .filter(g => g.group_key === "collection")
+      .map(g => g.group_value)
+      .some(a => bloomFilter.has(a))
 }
 
 const NFTTable = ({ walletAddress, nftDataArray }: NFTTableProps) => {
@@ -17,6 +33,8 @@ const NFTTable = ({ walletAddress, nftDataArray }: NFTTableProps) => {
   const searchParams = useSearchParams();
   const collectionFilter = searchParams.get("collection");
   const typeFilter = searchParams.get("type");
+  const blocklistFilter = searchParams.get("blocklist");
+  const solflareBlocklist = useBloomFilter('/blocklists/solflare/nftBlocklist.json');
 
   const itemsPerPage = 6;
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,10 +55,9 @@ const NFTTable = ({ walletAddress, nftDataArray }: NFTTableProps) => {
     }));
 
     if (collectionFilter) {
-      filtered = filtered.filter(
-        (nft) =>
-          nft.grouping.find((g) => g.group_key === "collection")
-            ?.group_value === collectionFilter,
+      filtered = filtered.filter((nft) =>
+        nft.grouping.find((g) => g.group_key === "collection")
+          ?.group_value === collectionFilter,
       );
     }
 
@@ -48,8 +65,25 @@ const NFTTable = ({ walletAddress, nftDataArray }: NFTTableProps) => {
       filtered = filtered.filter((nft) => nft.type === typeFilter);
     }
 
+    if (blocklistFilter && solflareBlocklist.bloomFilter) {
+      // console.log(blocklistFilter, 'before', filtered.length)
+      switch (blocklistFilter) {
+        case 'solflare-allowed': // hide nfts solflare would hide
+          filtered = filtered.filter((nft) => !hasNFT(solflareBlocklist.bloomFilter!, nft));
+          break;
+        case 'solflare-blocked': // show nfts solflare would hide
+          filtered = filtered.filter((nft) => hasNFT(solflareBlocklist.bloomFilter!, nft));
+          break;
+      }
+      // console.log(blocklistFilter, 'after', filtered.length)
+    }
+
     setFilteredNFTs(filtered);
-  }, [nftDataArray, collectionFilter, typeFilter]);
+  }, [
+    nftDataArray,
+    collectionFilter,
+    typeFilter,
+  ]);
 
   const totalItems = filteredNFTs.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
